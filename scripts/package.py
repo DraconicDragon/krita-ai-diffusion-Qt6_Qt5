@@ -76,6 +76,11 @@ def build_package():
     qtpy_src = Path(qtpy_spec.origin).resolve().parent
     copytree(qtpy_src, package_dir / "qtpy")
 
+    packaging_spec = importlib.util.find_spec("packaging")
+    if packaging_spec and packaging_spec.origin:
+        packaging_src = Path(packaging_spec.origin).resolve().parent
+        copytree(packaging_src, package_dir / "packaging")
+
     plugin_src = root / "ai_diffusion"
     plugin_dst = package_dir / "ai_diffusion"
 

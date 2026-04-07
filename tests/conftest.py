@@ -10,9 +10,12 @@ from typing import Any
 import aiohttp
 import psutil
 import pytest
-from PyQt5.QtCore import QCoreApplication
 
 sys.path.append(str(Path(__file__).parent.parent))
+from ai_diffusion import qt_compat  # noqa: F401
+
+from PyQt5.QtCore import QCoreApplication
+
 from ai_diffusion import eventloop, network, util
 
 from .config import result_dir

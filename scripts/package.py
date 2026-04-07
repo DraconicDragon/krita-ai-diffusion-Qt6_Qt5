@@ -1,4 +1,5 @@
 import asyncio
+import importlib.util
 import os
 import subprocess
 import sys
@@ -69,6 +70,12 @@ def build_package():
     package_dir.mkdir()
     copy(root / "ai_diffusion.desktop", package_dir)
 
+    qtpy_spec = importlib.util.find_spec("qtpy")
+    if qtpy_spec is None or qtpy_spec.origin is None:
+        raise RuntimeError("qtpy is required to build the release package")
+    qtpy_src = Path(qtpy_spec.origin).resolve().parent
+    copytree(qtpy_src, package_dir / "qtpy")
+
     plugin_src = root / "ai_diffusion"
     plugin_dst = package_dir / "ai_diffusion"
 
@@ -102,9 +109,7 @@ async def publish_package(package_path: Path, target: str):
         print("Uploading package to", service_url)
         async with session.put(f"/plugin/upload/{version}", data=archive_data) as response:
             if response.status != 200:
-                raise RuntimeError(
-                    f"Failed to upload package: {response.status}", await response.text()
-                )
+                raise RuntimeError(f"Failed to upload package: {response.status}", await response.text())
             uploaded = await response.json()
             for key, value in uploaded.items():
                 print(f"{key}: {value}")

@@ -7,7 +7,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, NamedTuple
 
-from PyQt5.QtCore import QObject, pyqtSignal
+from .qt_compat import QObject, pyqtSignal
 
 from .api import CheckpointInput, LoraInput
 from .localization import translate as _

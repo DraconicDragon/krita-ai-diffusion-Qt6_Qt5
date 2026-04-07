@@ -5,30 +5,6 @@ from pathlib import Path
 from typing import Any
 
 from krita import Krita
-from PyQt5.QtCore import QMetaObject, QPoint, QSize, Qt, QUrl, QUuid, pyqtSignal
-from PyQt5.QtGui import QDesktopServices, QFontMetrics, QIcon, QPalette
-from PyQt5.QtWidgets import (
-    QAction,
-    QComboBox,
-    QDoubleSpinBox,
-    QFileDialog,
-    QFrame,
-    QGridLayout,
-    QHBoxLayout,
-    QLabel,
-    QLineEdit,
-    QListWidgetItem,
-    QMenu,
-    QMessageBox,
-    QScrollArea,
-    QSlider,
-    QSpinBox,
-    QSplitter,
-    QTextEdit,
-    QToolButton,
-    QVBoxLayout,
-    QWidget,
-)
 
 from ..client import TextOutput
 from ..custom_workflow import (
@@ -42,6 +18,39 @@ from ..jobs import JobKind
 from ..localization import translate as _
 from ..model import Model
 from ..properties import Bind, Binding, bind, bind_combo
+from ..qt_compat import (
+    QAction,
+    QComboBox,
+    QDesktopServices,
+    QDoubleSpinBox,
+    QFileDialog,
+    QFontMetrics,
+    QFrame,
+    QGridLayout,
+    QHBoxLayout,
+    QIcon,
+    QLabel,
+    QLineEdit,
+    QListWidgetItem,
+    QMenu,
+    QMessageBox,
+    QMetaObject,
+    QPalette,
+    QPoint,
+    QScrollArea,
+    QSize,
+    QSlider,
+    QSpinBox,
+    QSplitter,
+    Qt,
+    QTextEdit,
+    QToolButton,
+    QUrl,
+    QUuid,
+    QVBoxLayout,
+    QWidget,
+    pyqtSignal,
+)
 from ..root import root
 from ..settings import settings
 from ..style import Styles
@@ -66,7 +75,7 @@ class LayerSelect(QComboBox):
 
         self.setContentsMargins(0, 0, 0, 0)
         self.setMinimumContentsLength(20)
-        self.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLength)
+        self.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
         self.currentIndexChanged.connect(lambda _: self.value_changed.emit())
 
         self._update()
@@ -363,7 +372,7 @@ class ChoiceParamWidget(QComboBox):
         super().__init__(parent)
         self.param = param
         self.setMinimumContentsLength(20)
-        self.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLength)
+        self.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
 
         if param.choices:
             self.addItems(param.choices)
@@ -734,9 +743,7 @@ class CustomWorkflowWidget(QWidget):
         self._style_widget = StyleSelectWidget(self)
         self._style_widget.setVisible(False)  # Hidden until workflow has synced style
 
-        self._prompt_widget = ActiveRegionWidget(
-            self._model.regions, self, header=PromptHeader.none
-        )
+        self._prompt_widget = ActiveRegionWidget(self._model.regions, self, header=PromptHeader.none)
         self._prompt_widget.setVisible(False)  # Hidden until workflow has synced prompts
         self._prompt_widget.positive.activated.connect(self._generate)
         self._prompt_widget.negative.activated.connect(self._generate)
@@ -758,14 +765,8 @@ class CustomWorkflowWidget(QWidget):
         self._mode_button.clicked.connect(self._show_generate_menu)
         menu = QMenu(self)
         menu.addAction(self._mk_action(CustomGenerationMode.regular, _("Generate"), "generate"))
-        menu.addAction(
-            self._mk_action(CustomGenerationMode.live, _("Generate Live"), "workspace-live")
-        )
-        menu.addAction(
-            self._mk_action(
-                CustomGenerationMode.animation, _("Generate Animation"), "workspace-animation"
-            )
-        )
+        menu.addAction(self._mk_action(CustomGenerationMode.live, _("Generate Live"), "workspace-live"))
+        menu.addAction(self._mk_action(CustomGenerationMode.animation, _("Generate Animation"), "workspace-animation"))
         self._generate_menu = menu
 
         self._queue_button = QueueButton(parent=self._bottom)
@@ -923,9 +924,7 @@ class CustomWorkflowWidget(QWidget):
             self._prompt_widget.setVisible(False)
             return
         self._save_workflow_button.setEnabled(True)
-        self._delete_workflow_button.setEnabled(
-            self.model.custom.workflow.source is WorkflowSource.local
-        )
+        self._delete_workflow_button.setEnabled(self.model.custom.workflow.source is WorkflowSource.local)
 
         graph = self.model.custom.graph
         has_synced_style_and_prompt = (
@@ -1041,10 +1040,7 @@ class CustomWorkflowWidget(QWidget):
             q = QMessageBox.question(
                 self,
                 _("Overwrite Workflow"),
-                _("A workflow named '{name}' already exists. Do you want to overwrite it?").format(
-                    name=name
-                )
-                + details,
+                _("A workflow named '{name}' already exists. Do you want to overwrite it?").format(name=name) + details,
                 QMessageBox.Yes | QMessageBox.No,
                 QMessageBox.StandardButton.No,
             )
@@ -1084,6 +1080,4 @@ class CustomWorkflowPlaceholder(QWidget):
         if self._model != model:
             Binding.disconnect_all(self._connections)
             self._model = model
-            self._connections = [
-                bind(model, "workspace", self._workspace_select, "value", Bind.one_way)
-            ]
+            self._connections = [bind(model, "workspace", self._workspace_select, "value", Bind.one_way)]

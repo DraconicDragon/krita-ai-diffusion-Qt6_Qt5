@@ -8,8 +8,9 @@ from enum import Enum
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal, NamedTuple
 
-from PyQt5.QtCore import (
+from .qt_compat import (
     QAbstractListModel,
+    QCloseEvent,
     QMetaObject,
     QModelIndex,
     QObject,
@@ -18,6 +19,29 @@ from PyQt5.QtCore import (
     QTimer,
     QUuid,
     pyqtSignal,
+)
+from .qt_compat import QDesktopServices, QFontMetrics, QIcon, QPalette
+from .qt_compat import (
+    QAction,
+    QCheckBox,
+    QComboBox,
+    QDoubleSpinBox,
+    QFrame,
+    QGridLayout,
+    QHBoxLayout,
+    QLabel,
+    QMenu,
+    QPlainTextEdit,
+    QPushButton,
+    QScrollBar,
+    QSizePolicy,
+    QSlider,
+    QSpinBox,
+    QStyle,
+    QStyleOption,
+    QToolButton,
+    QWidget,
+    QWidgetAction,
 )
 
 from . import eventloop

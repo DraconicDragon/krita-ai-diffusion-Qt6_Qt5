@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from enum import Enum
 
-from PyQt5.QtCore import QMetaObject, QObject, QUuid, pyqtSignal
+from .qt_compat import QMetaObject, QObject, QUuid, pyqtSignal
 
 from . import eventloop, model, workflow
 from .api import ConditioningInput, RegionInput

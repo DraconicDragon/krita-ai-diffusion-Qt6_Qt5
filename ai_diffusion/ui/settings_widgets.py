@@ -3,9 +3,8 @@ from __future__ import annotations
 from enum import Enum
 from typing import Any
 
-from PyQt5.QtCore import QAbstractItemModel, QSize, Qt, pyqtSignal
-from PyQt5.QtGui import QFontMetrics, QIcon
-from PyQt5.QtWidgets import (
+from ..qt_compat import QAbstractItemModel, QFontMetrics, QIcon, QSize, Qt, pyqtSignal
+from ..qt_compat import (
     QCheckBox,
     QComboBox,
     QFrame,

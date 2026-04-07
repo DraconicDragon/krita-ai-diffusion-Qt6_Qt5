@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 from typing import Any, NamedTuple
 
-from PyQt5.QtCore import QObject, Qt, QUuid, pyqtSignal
+from .qt_compat import QObject, Qt, QUuid, pyqtSignal
 
 from . import jobs, model, resources, util
 from .api import ControlInput

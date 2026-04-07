@@ -7,7 +7,7 @@ from weakref import WeakValueDictionary
 
 import krita
 from krita import Krita
-from PyQt5.QtCore import QByteArray, QObject, QTimer, pyqtSignal
+from .qt_compat import QByteArray, QObject, QTimer, pyqtSignal
 
 from .image import Bounds, Extent, Image, Mask
 from .layer import Layer, LayerManager, LayerType

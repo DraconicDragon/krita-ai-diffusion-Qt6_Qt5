@@ -2,14 +2,23 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from PyQt5.QtCore import QObject, QSize, Qt
-from PyQt5.QtGui import QFontMetrics, QGuiApplication, QIcon, QPalette, QPixmap
-from PyQt5.QtWidgets import QLabel, QVBoxLayout, QWidget
-
 from ..client import Client
 from ..files import FileFormat
 from ..localization import translate as _
 from ..platform_tools import is_windows
+from ..qt_compat import (
+    QFontMetrics,
+    QGuiApplication,
+    QIcon,
+    QLabel,
+    QObject,
+    QPalette,
+    QPixmap,
+    QSize,
+    Qt,
+    QVBoxLayout,
+    QWidget,
+)
 from ..settings import Setting
 from ..style import Arch
 from ..util import client_logger as log
@@ -26,7 +35,7 @@ highlight = "#80d0f0" if is_dark else "#335577"
 strong_highlight = "#70d0ff" if is_dark else "#2040ff"
 progress_alt = "#a16207" if is_dark else "#ca8a04"
 active = _palette.color(QPalette.ColorRole.Highlight).name()
-line = _palette.color(QPalette.ColorRole.Background).darker(120).name()
+line = _palette.color(QPalette.ColorRole.Window).darker(120).name()
 line_base = _palette.color(QPalette.ColorRole.Base).darker(120).name()
 
 flat_combo_stylesheet = f"""

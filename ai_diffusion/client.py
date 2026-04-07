@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Generic, NamedTuple, TypeVar
 
-from PyQt5.QtCore import QObject, pyqtSignal
+from .qt_compat import QObject, pyqtSignal
 
 from .api import WorkflowInput
 from .comfy_workflow import ComfyObjectInfo

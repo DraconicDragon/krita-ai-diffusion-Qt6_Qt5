@@ -1,22 +1,22 @@
 from __future__ import annotations
 
-from PyQt5.QtCore import QMetaObject, Qt
-from PyQt5.QtWidgets import (
-    QComboBox,
-    QHBoxLayout,
-    QLabel,
-    QProgressBar,
-    QPushButton,
-    QRadioButton,
-    QSizePolicy,
-    QVBoxLayout,
-    QWidget,
-)
-
 from ..image import Extent, Image
 from ..localization import translate as _
 from ..model import Model
 from ..properties import Bind, Binding, bind, bind_combo, bind_toggle
+from ..qt_compat import (
+    QComboBox,
+    QHBoxLayout,
+    QLabel,
+    QMetaObject,
+    QProgressBar,
+    QPushButton,
+    QRadioButton,
+    QSizePolicy,
+    Qt,
+    QVBoxLayout,
+    QWidget,
+)
 from ..root import root
 from ..settings import settings
 from . import theme
@@ -68,9 +68,7 @@ class AnimationWidget(QWidget):
         layout.addLayout(prompt_layout)
 
         self.strength_slider = StrengthWidget(parent=self)
-        self.add_control_button = create_wide_tool_button(
-            "control-add", _("Add Control Layer"), self
-        )
+        self.add_control_button = create_wide_tool_button("control-add", _("Add Control Layer"), self)
         strength_layout = QHBoxLayout()
         strength_layout.addWidget(self.strength_slider)
         strength_layout.addWidget(self.add_control_button)
@@ -109,16 +107,12 @@ class AnimationWidget(QWidget):
 
         self.target_layer = QComboBox(self)
         self.target_layer.setMinimumContentsLength(20)
-        self.target_layer.setSizeAdjustPolicy(
-            QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLength
-        )
+        self.target_layer.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
         layout.addWidget(self.target_layer)
 
         self.preview_area = QLabel(self)
         self.preview_area.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.preview_area.setAlignment(
-            Qt.AlignmentFlag(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
-        )
+        self.preview_area.setAlignment(Qt.AlignmentFlag(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft))
         layout.addWidget(self.preview_area)
 
         self.update_mode()
@@ -181,9 +175,7 @@ class AnimationWidget(QWidget):
         else:
             self.generate_button.setText(_("Generate Frame"))
             self.generate_button.setToolTip(
-                _(
-                    "Generate a single frame from the current canvas and insert it into the target layer."
-                )
+                _("Generate a single frame from the current canvas and insert it into the target layer.")
             )
 
     def update_target_layers(self):

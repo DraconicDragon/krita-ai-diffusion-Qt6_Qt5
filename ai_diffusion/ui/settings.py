@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 from krita import Krita
-from PyQt5.QtCore import QMetaObject, QSize, Qt, QUrl, pyqtSignal
-from PyQt5.QtGui import (
+from ..qt_compat import QMetaObject, QSize, Qt, QUrl, pyqtSignal
+from ..qt_compat import (
     QColor,
     QCursor,
     QDesktopServices,
@@ -11,7 +11,7 @@ from PyQt5.QtGui import (
     QGuiApplication,
     QPainter,
 )
-from PyQt5.QtWidgets import (
+from ..qt_compat import (
     QCheckBox,
     QComboBox,
     QDialog,

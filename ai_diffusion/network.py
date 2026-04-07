@@ -8,10 +8,17 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import NamedTuple
 
-from PyQt5.QtCore import QBuffer, QByteArray, QFile, QUrl
-from PyQt5.QtNetwork import QNetworkAccessManager, QNetworkReply, QNetworkRequest, QSslError
-
 from .localization import translate as _
+from .qt_compat import (
+    QBuffer,
+    QByteArray,
+    QFile,
+    QNetworkAccessManager,
+    QNetworkReply,
+    QNetworkRequest,
+    QSslError,
+    QUrl,
+)
 from .util import client_logger as log
 
 
@@ -22,9 +29,7 @@ class NetworkError(Exception):
     status: int | None = None
     data: dict | None = None
 
-    def __init__(
-        self, code: int, msg: str, url: str, status: int | None = None, data: dict | None = None
-    ):
+    def __init__(self, code: int, msg: str, url: str, status: int | None = None, data: dict | None = None):
         self.code = code
         self.message = msg
         self.url = url
@@ -53,9 +58,7 @@ class NetworkError(Exception):
                 except Exception:  # noqa
                     pass
         if code == QNetworkReply.NetworkError.OperationCanceledError:
-            return NetworkError(
-                code, "Connection timed out, the server took too long to respond", url
-            )
+            return NetworkError(code, "Connection timed out, the server took too long to respond", url)
         return NetworkError(code, reply.errorString(), url, status)
 
 
@@ -78,6 +81,31 @@ class Request(NamedTuple):
 Headers = list[tuple[str, str]]
 
 
+def _set_follow_redirects(request: QNetworkRequest):
+    attr_enum = getattr(QNetworkRequest, "Attribute", None)
+
+    follow_attr = getattr(QNetworkRequest, "FollowRedirectsAttribute", None)
+    if follow_attr is None and attr_enum is not None:
+        follow_attr = getattr(attr_enum, "FollowRedirectsAttribute", None)
+    if follow_attr is not None:
+        request.setAttribute(follow_attr, True)
+        return
+
+    policy_attr = getattr(QNetworkRequest, "RedirectPolicyAttribute", None)
+    if policy_attr is None and attr_enum is not None:
+        policy_attr = getattr(attr_enum, "RedirectPolicyAttribute", None)
+
+    redirect_policy = getattr(QNetworkRequest, "RedirectPolicy", None)
+    no_less_safe = None
+    if redirect_policy is not None:
+        no_less_safe = getattr(redirect_policy, "NoLessSafeRedirectPolicy", None)
+    if no_less_safe is None:
+        no_less_safe = getattr(QNetworkRequest, "NoLessSafeRedirectPolicy", None)
+
+    if policy_attr is not None and no_less_safe is not None:
+        request.setAttribute(policy_attr, no_less_safe)
+
+
 class RequestManager:
     def __init__(self):
         self._net = QNetworkAccessManager()
@@ -96,7 +124,7 @@ class RequestManager:
 
     def _prepare_request(self, url: str, timeout: float | None = None, bearer: str | None = None):
         request = QNetworkRequest(QUrl(url))
-        request.setAttribute(QNetworkRequest.FollowRedirectsAttribute, True)
+        _set_follow_redirects(request)
         bearer_token = bearer or self._bearer_token
         if bearer_token:
             request.setRawHeader(b"Authorization", f"Bearer {bearer_token}".encode())
@@ -129,9 +157,7 @@ class RequestManager:
             if isinstance(data, bytes):
                 data = QByteArray(data)
             assert isinstance(data, QByteArray)
-            request.setHeader(
-                QNetworkRequest.KnownHeaders.ContentTypeHeader, "application/octet-stream"
-            )
+            request.setHeader(QNetworkRequest.KnownHeaders.ContentTypeHeader, "application/octet-stream")
             request.setHeader(QNetworkRequest.KnownHeaders.ContentLengthHeader, data.size())
             reply = self._net.put(request, data)
         else:
@@ -158,12 +184,10 @@ class RequestManager:
         assert isinstance(data, QByteArray)
 
         request = QNetworkRequest(QUrl(url))
-        request.setAttribute(QNetworkRequest.Attribute.FollowRedirectsAttribute, True)
+        _set_follow_redirects(request)
         if sha256:
             request.setRawHeader(b"x-amz-checksum-sha256", sha256.encode("utf-8"))
-        request.setHeader(
-            QNetworkRequest.KnownHeaders.ContentTypeHeader, "application/octet-stream"
-        )
+        request.setHeader(QNetworkRequest.KnownHeaders.ContentTypeHeader, "application/octet-stream")
         request.setHeader(QNetworkRequest.KnownHeaders.ContentLengthHeader, data.size())
         reply = self._net.put(request, data)
         assert reply is not None, f"Network request for {url} failed: reply is None"
@@ -235,9 +259,7 @@ class RequestManager:
                 future.set_exception(e)
 
     def _cleanup(self):
-        self._requests = {
-            reply: request for reply, request in self._requests.items() if not reply.isFinished()
-        }
+        self._requests = {reply: request for reply, request in self._requests.items() if not reply.isFinished()}
 
     def _handle_ssl_errors(self, reply: QNetworkReply, errors: list[QSslError]):
         for error in errors:
@@ -298,12 +320,10 @@ def _write_file_chunks(file: QFile, reply: QNetworkReply):
 async def _try_download(network: QNetworkAccessManager, url: str, path: Path):
     out_file = QFile(str(path) + ".part")
     if not out_file.open(QFile.ReadWrite | QFile.Append):  # type: ignore
-        raise RuntimeError(
-            _("Error during download: could not open {path} for writing", path=out_file.fileName())
-        )
+        raise RuntimeError(_("Error during download: could not open {path} for writing", path=out_file.fileName()))
 
     request = QNetworkRequest(QUrl(_map_host(url)))
-    request.setAttribute(QNetworkRequest.FollowRedirectsAttribute, True)
+    _set_follow_redirects(request)
     if out_file.size() > 0:
         log.info(f"Found {path}.part, resuming download from {out_file.size()} bytes")
         request.setRawHeader(b"Range", f"bytes={out_file.size()}-".encode())

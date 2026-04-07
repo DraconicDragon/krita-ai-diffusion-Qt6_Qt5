@@ -4,7 +4,7 @@ import json
 from textwrap import wrap as wrap_text
 from typing import ClassVar, cast
 
-from PyQt5.QtCore import (
+from ..qt_compat import (
     QEvent,
     QItemSelectionModel,
     QMetaObject,
@@ -15,7 +15,7 @@ from PyQt5.QtCore import (
     QUuid,
     pyqtSignal,
 )
-from PyQt5.QtGui import (
+from ..qt_compat import (
     QColor,
     QGuiApplication,
     QIcon,
@@ -24,7 +24,7 @@ from PyQt5.QtGui import (
     QMouseEvent,
     QPalette,
 )
-from PyQt5.QtWidgets import (
+from ..qt_compat import (
     QAction,
     QCheckBox,
     QComboBox,
@@ -620,7 +620,7 @@ class CustomInpaintWidget(QWidget):
         )
         self.context_combo.setMinimumContentsLength(20)
         self.context_combo.setSizeAdjustPolicy(
-            QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLength
+            QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon
         )
         self.context_combo.currentIndexChanged.connect(self.set_context)
 

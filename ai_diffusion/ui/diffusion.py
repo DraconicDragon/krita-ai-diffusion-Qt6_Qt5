@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import krita
 from krita import DockWidget, Krita
-from PyQt5.QtCore import Qt, pyqtSignal
-from PyQt5.QtWidgets import (
+from ..qt_compat import Qt, pyqtSignal
+from ..qt_compat import (
     QCheckBox,
     QHBoxLayout,
     QLabel,

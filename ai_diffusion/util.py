@@ -12,8 +12,7 @@ from itertools import islice
 from pathlib import Path
 from typing import Any, TypeVar
 
-from PyQt5 import sip
-from PyQt5.QtCore import QObject, QStandardPaths
+from .qt_compat import QObject, QStandardPaths, sip
 
 T = TypeVar("T")
 R = TypeVar("R")
@@ -207,5 +206,10 @@ def acquire_elements(l: list[QOBJECT]) -> list[QOBJECT]:
     # allocates the list members!
     for obj in l:
         if obj is not None:
-            sip.transferback(obj)
+            try:
+                sip.transferback(obj)
+            except TypeError:
+                # PyQt6/Krita can return wrappers that SIP does not accept here.
+                # In that case, leave ownership unchanged instead of crashing.
+                pass
     return l

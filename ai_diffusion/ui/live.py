@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-from PyQt5.QtCore import QMetaObject, QRectF, Qt, QTimer
-from PyQt5.QtGui import QColor, QFont, QPainter, QPen
-from PyQt5.QtWidgets import (
+from ..qt_compat import QColor, QFont, QMetaObject, QPainter, QPen, QRectF, Qt, QTimer
+from ..qt_compat import (
     QHBoxLayout,
     QLabel,
     QSizePolicy,

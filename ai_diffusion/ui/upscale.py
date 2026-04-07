@@ -1,6 +1,5 @@
-from PyQt5.QtCore import QEvent, QMetaObject, Qt, pyqtSignal
-from PyQt5.QtGui import QCursor
-from PyQt5.QtWidgets import (
+from ..qt_compat import QCursor, QEvent, QMetaObject, Qt, pyqtSignal
+from ..qt_compat import (
     QComboBox,
     QDoubleSpinBox,
     QGroupBox,

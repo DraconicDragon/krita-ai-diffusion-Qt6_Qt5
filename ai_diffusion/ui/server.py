@@ -7,9 +7,8 @@ from enum import Enum
 from pathlib import Path
 
 from krita import Krita
-from PyQt5.QtCore import Qt, QUrl, pyqtSignal
-from PyQt5.QtGui import QDesktopServices
-from PyQt5.QtWidgets import (
+from ..qt_compat import QDesktopServices, Qt, QUrl, pyqtSignal
+from ..qt_compat import (
     QCheckBox,
     QComboBox,
     QFileDialog,

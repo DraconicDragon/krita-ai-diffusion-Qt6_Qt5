@@ -3,9 +3,9 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import ClassVar, cast
 
-from PyQt5.QtCore import QAbstractProxyModel, QRect, QSize, QStringListModel, Qt
-from PyQt5.QtGui import QColor, QFont, QFontMetrics, QPalette, QPen, QTextCursor
-from PyQt5.QtWidgets import QApplication, QCompleter, QPlainTextEdit, QStyle, QStyledItemDelegate
+from ..qt_compat import QAbstractProxyModel, QApplication, QColor, QCompleter, QFont
+from ..qt_compat import QFontMetrics, QPalette, QPen, QPlainTextEdit, QStyle, QStyledItemDelegate
+from ..qt_compat import QRect, QStringListModel, QSize, QTextCursor, Qt
 
 from ..files import FileFilter
 from ..root import root

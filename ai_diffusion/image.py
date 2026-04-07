@@ -7,15 +7,22 @@ from math import sqrt
 from pathlib import Path
 from typing import NamedTuple, SupportsIndex
 
-from PyQt5.QtCore import QBuffer, QByteArray, QFile, QIODevice, QRect, QSize, Qt
-from PyQt5.QtGui import (
+from .platform_tools import is_linux
+from .qt_compat import (
+    QBuffer,
+    QByteArray,
     QColorSpace,
+    QFile,
     QIcon,
     QImage,
     QImageReader,
     QImageWriter,
+    QIODevice,
     QPainter,
     QPixmap,
+    QRect,
+    QSize,
+    Qt,
     qAlpha,
     qBlue,
     qGray,
@@ -23,8 +30,6 @@ from PyQt5.QtGui import (
     qRed,
     qRgba,
 )
-
-from .platform_tools import is_linux
 from .settings import ImageFileFormat, settings
 from .util import clamp, ensure
 from .util import client_logger as log
@@ -523,11 +528,12 @@ class Image:
             return buffer
         else:
             ptr = ensure(self._qimage.constBits(), "Accessing data of invalid image")
-            return QByteArray(ptr.asstring(self._qimage.byteCount()))
+            size = self._qimage.sizeInBytes() if hasattr(self._qimage, "sizeInBytes") else self._qimage.byteCount()
+            return QByteArray(ptr.asstring(size))
 
     @property
     def size(self):  # in bytes
-        return self._qimage.byteCount()
+        return self._qimage.sizeInBytes() if hasattr(self._qimage, "sizeInBytes") else self._qimage.byteCount()
 
     def to_array(self):
         import numpy as np

@@ -6,7 +6,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import NamedTuple
 
-from PyQt5.QtCore import QObject, pyqtSignal
+from .qt_compat import QObject, pyqtSignal
 
 from . import __version__, eventloop
 from .network import RequestManager

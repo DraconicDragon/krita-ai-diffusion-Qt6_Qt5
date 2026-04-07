@@ -5,8 +5,8 @@ from itertools import chain
 from typing import Any, ClassVar, cast
 
 from krita import Krita
-from PyQt5.QtCore import QEvent, QMetaObject, QSize, Qt, QUrl, pyqtSignal
-from PyQt5.QtGui import (
+from ..qt_compat import QEvent, QMetaObject, QSize, Qt, QUrl, pyqtSignal
+from ..qt_compat import (
     QCloseEvent,
     QColor,
     QDesktopServices,
@@ -24,7 +24,7 @@ from PyQt5.QtGui import (
     QTextCharFormat,
     QTextCursor,
 )
-from PyQt5.QtWidgets import (
+from ..qt_compat import (
     QAction,
     QCheckBox,
     QComboBox,
@@ -987,7 +987,8 @@ class GenerateButton(QPushButton):
     def paintEvent(self, a0: QPaintEvent | None) -> None:
         opt = QStyleOption()
         opt.initFrom(self)
-        opt.state |= QStyle.StateFlag.State_Sunken if self.isDown() else 0
+        if self.isDown():
+            opt.state |= QStyle.StateFlag.State_Sunken
         painter = QPainter(self)
         fm = self.fontMetrics()
         style = ensure(self.style())
@@ -999,7 +1000,7 @@ class GenerateButton(QPushButton):
         rect = self.rect()
         pixmap = self.icon().pixmap(int(fm.height() * 1.3))
         pixmap_width = _get_width_dip(pixmap)
-        is_hover = int(opt.state) & QStyle.StateFlag.State_MouseOver
+        is_hover = bool(opt.state & QStyle.StateFlag.State_MouseOver)
         element = QStyle.PrimitiveElement.PE_PanelButtonCommand
         content_width = fm.width(self._operation) + 5 + pixmap_width
         content_rect = rect.adjusted(int(0.5 * (rect.width() - content_width)), 0, 0, 0)
@@ -1188,7 +1189,7 @@ def _paint_tool_drop_down(widget: QToolButton, text: str | None = None):
     rect = widget.rect()
     pixmap = widget.icon().pixmap(int(rect.height() * 0.75))
     element = QStyle.PrimitiveElement.PE_Widget
-    if int(opt.state) & QStyle.StateFlag.State_MouseOver:
+    if bool(opt.state & QStyle.StateFlag.State_MouseOver):
         element = QStyle.PrimitiveElement.PE_PanelButtonCommand
     style.drawPrimitive(element, opt, painter, widget)
     style.drawItemPixmap(painter, rect.adjusted(4, 0, 0, 0), align, pixmap)

@@ -4,9 +4,8 @@ from pathlib import Path
 from typing import cast
 
 from krita import Krita
-from PyQt5.QtCore import Qt, QUrl, pyqtSignal
-from PyQt5.QtGui import QColor, QDesktopServices, QPalette
-from PyQt5.QtWidgets import (
+from ..qt_compat import QColor, QDesktopServices, QPalette, QUrl, Qt, pyqtSignal
+from ..qt_compat import (
     QCheckBox,
     QComboBox,
     QCompleter,

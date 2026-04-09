@@ -17,10 +17,10 @@ from . import qt_compat as qt_compat
 
 # The following imports depend on the code running inside Krita, so the cannot be imported in tests.
 if importlib.util.find_spec("krita"):
-    import krita
+    # import krita
 
-    krita_ver = krita.Krita.instance().version()
-    if not krita_ver.startswith("5"):
-        raise ImportError(f"This Plugin is for Krita 5.x, but you are using Krita {krita_ver}.")
+    # krita_ver = krita.Krita.instance().version()
+    # if not krita_ver.startswith("5"):
+    #     raise ImportError(f"This Plugin is for Krita 5.x, but you are using Krita {krita_ver}.")
 
     from .extension import AIToolsExtension as AIToolsExtension

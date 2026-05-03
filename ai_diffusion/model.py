@@ -15,7 +15,7 @@ from typing import Any, NamedTuple
 
 from .qt_compat import QMetaObject, QObject, Qt, QUuid, QBrush, QColor, QPainter, pyqtSignal
 
-from . import eventloop, util, workflow
+from . import eventloop, resolution, util, workflow
 from .api import (
     ConditioningInput,
     ControlInput,
@@ -1549,6 +1549,9 @@ class AnimationWorkspace(QObject, ObservableProperties):
 def get_selection_modifiers(
     arch: Arch | InpaintContext, inpaint_mode: InpaintMode, strength: float, min_size=256
 ):
+    if arch is InpaintContext.mask_bounds:  # use exact bounds, no padding
+        return SelectionModifiers(multiple=1)
+
     feather = settings.selection_feather / 100
     invert = False
 
@@ -1558,22 +1561,13 @@ def get_selection_modifiers(
         feather = min(feather, 0.01)
         invert = True
 
-    if isinstance(arch, InpaintContext):
-        if arch is InpaintContext.mask_bounds:
-            min_size = 0
-            multiple = 1
-        else:
-            multiple = 8
-    else:
-        multiple = arch.latent_compression_factor
-
     return SelectionModifiers(
         feather_rel=feather * strength,
         feather_min_px=round(settings.selection_min_transition * strength),
         pad_rel=settings.selection_padding / 100,
         pad_offset_px=settings.selection_grow_offset,
         size_min_px=min_size,
-        multiple=multiple,
+        multiple=resolution.diffusion_multiple,
         invert=invert,
     )
 

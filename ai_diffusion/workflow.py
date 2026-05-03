@@ -163,8 +163,12 @@ def load_checkpoint_with_lora(w: ComfyWorkflow, checkpoint: CheckpointInput, mod
                 clip = w.t5_tokenizer_options(clip, min_padding=1, min_length=0)
             case Arch.qwen | Arch.qwen_e | Arch.qwen_e_p | Arch.qwen_l:
                 clip = w.load_clip(te["qwen"], type="qwen_image")
+            case Arch.anima:
+                clip = w.load_clip(te["qwen_3_06b"], type="omnigen2")
             case Arch.zimage:
                 clip = w.load_clip(te["qwen_3_4b"], type="lumina2")
+            case Arch.ernie:
+                clip = w.load_clip(te["ministral"], type="flux2")
             case _:
                 raise RuntimeError(f"No text encoder for model architecture {arch.name}")
 
@@ -1327,7 +1331,7 @@ def upscale_tiled(
     models: ModelDict,
 ):
     upscale_factor = extent.initial.width / extent.input.width
-    multiple = models.arch.latent_compression_factor
+    multiple = resolution.diffusion_multiple
     if upscale.tile_overlap >= 0:
         layout = TileLayout(extent.initial, extent.desired.width, upscale.tile_overlap, multiple)
     else:
@@ -1714,9 +1718,9 @@ def prepare(
         else:
             tile_size = 1024
         tile_size = max(tile_size, target_extent.longest_side // 12)  # max 12x12 tiles total
-        tile_size = multiple_of(tile_size - 128, arch.latent_compression_factor)
+        tile_size = multiple_of(tile_size - 128, resolution.diffusion_multiple)
         tile_size = Extent(tile_size, tile_size)
-        initial_extent = target_extent.multiple_of(arch.latent_compression_factor)
+        initial_extent = target_extent.multiple_of(resolution.diffusion_multiple)
         extent = ExtentInput(canvas.extent, initial_extent, tile_size, target_extent)
         i.images = ImageInput(extent, canvas)
         assert upscale is not None

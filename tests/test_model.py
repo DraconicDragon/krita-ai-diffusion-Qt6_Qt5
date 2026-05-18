@@ -1,4 +1,4 @@
-"""Tests for ai_diffusion.model.Model - the document view model that collects UI parameters
+"""Tests for ai_diffusion.model.DocumentModel - the document view model that collects UI parameters
 and document data and forwards them as WorkflowInput to image generation clients."""
 
 from __future__ import annotations
@@ -13,15 +13,16 @@ from krita import Document as MockKritaDocument
 from krita import Krita, Selection
 from PyQt5.QtCore import QByteArray, Qt
 
-from ai_diffusion.api import WorkflowInput, WorkflowKind
-from ai_diffusion.client import ClientEvent, ClientMessage
-from ai_diffusion.connection import Connection, ConnectionState
-from ai_diffusion.custom_workflow import WorkflowCollection
+from ai_diffusion.backend.api import WorkflowInput, WorkflowKind
+from ai_diffusion.backend.client import CheckpointInfo, ClientEvent, ClientMessage
+from ai_diffusion.backend.resources import Arch, ControlMode
 from ai_diffusion.document import KritaDocument
 from ai_diffusion.image import BlendMode, Bounds, Extent, Image, ImageCollection
-from ai_diffusion.jobs import Job, JobKind, JobParams, JobRegion, JobState
 from ai_diffusion.layer import Layer, LayerType
-from ai_diffusion.model import ErrorKind, Model, ProgressKind, no_error
+from ai_diffusion.model.connection import Connection, ConnectionState
+from ai_diffusion.model.custom_workflow import WorkflowCollection
+from ai_diffusion.model.jobs import Job, JobKind, JobParams, JobRegion, JobState
+from ai_diffusion.model.model import DocumentModel, ErrorKind, ProgressKind, no_error
 from ai_diffusion.settings import ApplyBehavior, ApplyRegionBehavior
 from ai_diffusion.style import Style
 
@@ -50,9 +51,11 @@ def _make_style(checkpoint: str = "test_sd15.safetensors") -> Style:
 @asynccontextmanager
 async def _model_env(
     krita_doc: MockKritaDocument, workflows_folder: Path
-) -> AsyncIterator[tuple[Model, MockClient]]:
-    """Async context manager that sets up a fully wired Model/MockClient pair and tears down
+) -> AsyncIterator[tuple[DocumentModel, MockClient]]:
+    """Async context manager that sets up a fully wired DocumentModel/MockClient pair and tears down
     the Connection cleanly on exit to avoid pending-task warnings."""
+    from ai_diffusion.model.root import root as plugin_root
+
     client = MockClient()
 
     Krita.instance().setActiveDocument(krita_doc)
@@ -65,13 +68,19 @@ async def _model_env(
     assert conn.state is ConnectionState.connected
 
     wf_coll = WorkflowCollection(conn, folder=workflows_folder)
-    model = Model(doc, conn, wf_coll)
+    model = DocumentModel(doc, conn, wf_coll)
     model.style = _make_style()
     conn.message_received.connect(model.handle_message)
+    previous_connection = getattr(plugin_root, "_connection", None)
+    plugin_root._connection = conn
     try:
         yield model, client
     finally:
         await conn.disconnect()
+        if previous_connection is None:
+            del plugin_root._connection
+        else:
+            plugin_root._connection = previous_connection
 
 
 async def _wait_for_enqueue(
@@ -85,7 +94,7 @@ async def _wait_for_enqueue(
     raise TimeoutError(f"Only {len(client.enqueued)}/{count} jobs enqueued within the timeout")
 
 
-async def _run_generate(model: Model, client: MockClient) -> Job:
+async def _run_generate(model: DocumentModel, client: MockClient) -> Job:
     """Call model.generate() and wait for the new job to appear in the queue with its ID set."""
     n = len(client.enqueued)
     model.generate()
@@ -137,6 +146,66 @@ async def test_generate_simple(workflows_dir: Path):
         # Pure generation: no input image is passed to the workflow
         assert result[0].images is not None
         assert result[0].images.initial_image is None
+
+
+@qtapp
+async def test_generate_references(workflows_dir: Path):
+    krita_doc = Krita.instance().openDocument("test")
+
+    # Add three layers with distinct solid colours so we can identify them by image content
+    layer_colors = [
+        ("a", Qt.GlobalColor.red),
+        ("b", Qt.GlobalColor.green),
+        ("c", Qt.GlobalColor.blue),
+    ]
+    layer_images: dict[str, Image] = {}
+    layer_nodes = {}
+    for name, color in layer_colors:
+        node = krita_doc.createNode(name, "paintlayer")
+        img = Image.create(Extent(512, 512), fill=color)
+        node.setPixelData(img.to_packed_bytes(), 0, 0, 512, 512)
+        krita_doc.rootNode().addChildNode(node, None)
+        layer_images[name] = img
+        layer_nodes[name] = node
+
+    async with _model_env(krita_doc, workflows_dir) as (model, client):
+        # Register a flux2_4b checkpoint so the model resolves to that architecture;
+        # flux2_4b uses the "image X" replacement format for <layer:name> tokens.
+        client.models.checkpoints["test_flux2.safetensors"] = CheckpointInfo(
+            "test_flux2.safetensors", Arch.flux2_4b
+        )
+        model.style = _make_style("test_flux2.safetensors")
+        model.strength = 1.0
+
+        # Add an explicit reference control layer for layer "a"
+        krita_doc.setActiveNode(layer_nodes["a"])
+        ctrl = model.regions.control.emplace()
+        ctrl.set_mode(ControlMode.reference)
+
+        # Reference layers "b" and "c" (with a duplicate "b") via the prompt
+        model.regions.positive = "Use <layer:b> and <layer:c>, repeat <layer:b>"
+        model.generate()
+
+        result = await _wait_for_enqueue(client)
+        assert result[0].kind is WorkflowKind.generate
+
+        cond = result[0].conditioning
+        assert cond is not None
+
+        # All three layers were added as reference controls in order a, b, c
+        assert len(cond.control) == 3
+        assert all(c.mode is ControlMode.reference for c in cond.control)
+        ctrl_imgs = [c.image for c in cond.control]
+        assert all(img is not None for img in ctrl_imgs)
+        img_a, img_b, img_c = ctrl_imgs[0], ctrl_imgs[1], ctrl_imgs[2]
+        assert img_a is not None and img_b is not None and img_c is not None
+        assert Image.compare(img_a, layer_images["a"]) < 0.01
+        assert Image.compare(img_b, layer_images["b"]) < 0.01
+        assert Image.compare(img_c, layer_images["c"]) < 0.01
+
+        # Indexing starts at 2 because in edit mode the first image is always
+        # implicitly the canvas.
+        assert cond.positive == "Use image 2 and image 3, repeat image 2"
 
 
 @qtapp
@@ -209,7 +278,7 @@ async def test_generate_inpaint(workflows_dir: Path):
 
 @qtapp
 async def test_generate_batch(workflows_dir: Path):
-    """With batch_count=8 and a wildcard prompt, Model.generate should enqueue 8 separate jobs.
+    """With batch_count=8 and a wildcard prompt, DocumentModel.generate should enqueue 8 separate jobs.
     Each job re-evaluates the wildcard with a different seed, so both options must appear."""
     krita_doc = Krita.instance().openDocument("test")
     async with _model_env(krita_doc, workflows_dir) as (model, client):
@@ -381,7 +450,7 @@ _GREEN = 0xFF00FF00
 
 
 def _make_finished_job(
-    model: Model,
+    model: DocumentModel,
     result_images: list[Image],
     regions: list[JobRegion] | None = None,
     bounds: Bounds = _DOC_BOUNDS,
@@ -399,7 +468,7 @@ def _make_finished_job(
     return job
 
 
-def _paint_layers(model: Model) -> list[Layer]:
+def _paint_layers(model: DocumentModel) -> list[Layer]:
     """Return all paint layers currently visible in the document tree."""
     return [l for l in model.layers.updated().images if l.type is LayerType.paint]
 

@@ -8,7 +8,7 @@ from ..qt_compat import QFontMetrics, QPalette, QPen, QPlainTextEdit, QStyle, QS
 from ..qt_compat import QRect, QStringListModel, QSize, QTextCursor, Qt
 
 from ..files import FileFilter
-from ..root import root
+from ..model.root import root
 from ..settings import settings
 from ..text import char16_index_to_str_index
 from ..util import ensure, plugin_dir, user_data_dir

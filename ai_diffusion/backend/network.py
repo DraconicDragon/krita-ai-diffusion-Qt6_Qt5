@@ -8,8 +8,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import NamedTuple
 
-from .localization import translate as _
-from .qt_compat import (
+
+from ..qt_compat import (
     QBuffer,
     QByteArray,
     QFile,
@@ -19,7 +19,9 @@ from .qt_compat import (
     QSslError,
     QUrl,
 )
-from .util import client_logger as log
+
+from ..localization import translate as _
+from ..util import client_logger as log
 
 
 class NetworkError(Exception):

@@ -156,7 +156,6 @@ class Layer(QObject):
             data: QByteArray = self._node.projectionPixelData(*bounds)
         else:
             data: QByteArray = self._node.pixelDataAtTime(*bounds, time)
-        assert data is not None and data.size() >= bounds.extent.pixel_count * 4
         return Image.from_packed_bytes(data, bounds.extent)
 
     def write_pixels(
@@ -177,6 +176,8 @@ class Layer(QObject):
             # layer.cropNode(*bounds)  <- more efficient, but clutters the undo stack
             blank = Image.create(layer_bounds.extent, fill=0)
             self._node.setPixelData(blank.data, *layer_bounds)
+
+        assert img.extent == bounds.extent, "write_pixels: image size does must match bounds size"
         self._node.setPixelData(img.data, *bounds)
         if make_visible:
             self.is_visible = True
@@ -190,7 +191,6 @@ class Layer(QObject):
                 data: QByteArray = self._node.pixelData(*bounds)
             else:
                 data: QByteArray = self._node.pixelDataAtTime(*bounds, time)
-            assert data is not None and data.size() >= bounds.extent.pixel_count
             return Image.from_packed_bytes(data, bounds.extent, channels=1)
         else:
             img = self.get_pixels(bounds, time)

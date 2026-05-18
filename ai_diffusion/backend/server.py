@@ -11,12 +11,11 @@ from itertools import chain
 from pathlib import Path
 from typing import NamedTuple
 
-from .qt_compat import QNetworkAccessManager
+from ..qt_compat import QNetworkAccessManager
 
-from . import eventloop, resources
-from .localization import translate as _
-from .network import DownloadProgress, download
-from .platform_tools import (
+from .. import eventloop
+from ..localization import translate as _
+from ..platform_tools import (
     ZipFile,
     create_process,
     decode_pipe_bytes,
@@ -26,6 +25,11 @@ from .platform_tools import (
     is_macos,
     is_windows,
 )
+from ..settings import ServerBackend, settings
+from ..util import client_logger as log
+from ..util import server_logger as server_log
+from . import resources
+from .network import DownloadProgress, download
 from .resources import (
     Arch,
     CustomNode,
@@ -34,9 +38,6 @@ from .resources import (
     VerificationState,
     VerificationStatus,
 )
-from .settings import ServerBackend, settings
-from .util import client_logger as log
-from .util import server_logger as server_log
 
 _exe = ".exe" if is_windows else ""
 

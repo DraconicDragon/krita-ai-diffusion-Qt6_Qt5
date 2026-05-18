@@ -10,15 +10,15 @@ from typing import Any
 from .qt_compat import QByteArray, QObject, QImageReader, QMessageBox
 
 from . import eventloop
-from .api import FillMode, InpaintMode
-from .control import ControlLayer, ControlLayerList
-from .custom_workflow import CustomWorkspace
+from .backend.api import FillMode, InpaintMode
 from .image import ImageCollection
-from .jobs import Job, JobKind, JobParams, JobQueue
 from .localization import translate as _
-from .model import InpaintContext, Model
-from .properties import deserialize, serialize
-from .region import Region, RootRegion
+from .model.control import ControlLayer, ControlLayerList
+from .model.custom_workflow import CustomWorkspace
+from .model.jobs import Job, JobKind, JobParams, JobQueue
+from .model.model import DocumentModel, InpaintContext
+from .model.properties import deserialize, serialize
+from .model.region import Region, RootRegion
 from .settings import settings
 from .style import Style, Styles
 from .util import client_logger as log
@@ -53,7 +53,7 @@ class RecentlyUsedSync:
             log.warning(f"Failed to load default document settings: {type(e)} {e}")
             return RecentlyUsedSync()
 
-    def track(self, model: Model):
+    def track(self, model: DocumentModel):
         try:
             if _find_annotation(model.document, "ui.json") is None:
                 model.style = Styles.list().find(self.style) or Styles.list().default
@@ -115,7 +115,7 @@ class _HistoryResult:
 class ModelSync:
     """Synchronizes the model with the document's annotations."""
 
-    def __init__(self, model: Model):
+    def __init__(self, model: DocumentModel):
         self._model = model
         self._history: list[_HistoryResult] = []
         self._memory_used: dict[int, int] = {}  # slot -> memory used for images in bytes
@@ -161,7 +161,7 @@ class ModelSync:
         state_bytes = QByteArray(state_str.encode("utf-8"))
         model.document.annotate("ui.json", state_bytes)
 
-    def _load(self, model: Model, state_bytes: bytes):
+    def _load(self, model: DocumentModel, state_bytes: bytes):
         state = json.loads(state_bytes.decode("utf-8"))
         model.try_set_preview_layer(state.get("preview_layer", ""))
         _deserialize(model, state)
@@ -192,7 +192,7 @@ class ModelSync:
                 self._memory_used[item.slot] = images_bytes.size()
                 self._slot_index = max(self._slot_index, item.slot + 1)
 
-    def _track(self, model: Model):
+    def _track(self, model: DocumentModel):
         model.modified.connect(self._save_later)
         model.inpaint.modified.connect(self._save_later)
         model.upscale.modified.connect(self._save_later)
@@ -343,7 +343,7 @@ def _find_annotation(document, name: str):
     return None
 
 
-def import_prompt_from_file(model: Model):
+def import_prompt_from_file(model: DocumentModel):
     exts = (".png", ".jpg", ".jpeg", ".webp")
     filename = model.document.filename
     if model.regions.positive == "" and model.regions.negative == "" and filename.endswith(exts):

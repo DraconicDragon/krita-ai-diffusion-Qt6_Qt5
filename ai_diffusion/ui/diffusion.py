@@ -16,14 +16,14 @@ from ..qt_compat import (
 )
 
 from .. import eventloop
-from ..connection import ConnectionState
+from ..backend.server import Server, ServerState
 from ..document import KritaDocument
 from ..localization import translate as _
-from ..model import Model, Workspace
-from ..root import root
-from ..server import Server, ServerState
+from ..model.connection import ConnectionState
+from ..model.model import DocumentModel, Workspace
+from ..model.root import root
+from ..model.updates import UpdateState
 from ..settings import ServerMode, settings
-from ..updates import UpdateState
 from . import theme
 from .animation import AnimationWidget
 from .custom_workflow import CustomWorkflowPlaceholder, CustomWorkflowWidget
@@ -311,7 +311,7 @@ class ImageDiffusionWidget(DockWidget):
             await asyncio.sleep(0.1)  # wait until fully opened/initialized
         self.update_content()
 
-    def register_model(self, model: Model):
+    def register_model(self, model: DocumentModel):
         model.workspace_changed.connect(self.update_content)
 
     def update_content(self):

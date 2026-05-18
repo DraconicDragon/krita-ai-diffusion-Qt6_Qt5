@@ -4,16 +4,23 @@ import asyncio
 from collections.abc import Iterable
 from enum import Enum
 
-from .qt_compat import QObject, QUrl, QDesktopServices, pyqtSignal
+from ..qt_compat import QObject, QUrl, QDesktopServices, pyqtSignal
 
-from . import eventloop, util
-from .client import Client, ClientEvent, ClientMessage, DeviceInfo, MissingResources, SharedWorkflow
-from .cloud_client import CloudClient
-from .comfy_client import ComfyClient
-from .localization import translate as _
-from .network import NetworkError
+from .. import eventloop, util
+from ..backend.client import (
+    Client,
+    ClientEvent,
+    ClientMessage,
+    DeviceInfo,
+    MissingResources,
+    SharedWorkflow,
+)
+from ..backend.cloud_client import CloudClient
+from ..backend.comfy_client import ComfyClient
+from ..backend.network import NetworkError
+from ..localization import translate as _
+from ..settings import PerformancePreset, ServerMode, Settings, settings
 from .properties import ObservableProperties, Property
-from .settings import PerformancePreset, ServerMode, Settings, settings
 
 
 class ConnectionState(Enum):

@@ -5,9 +5,10 @@ from pathlib import Path
 from krita import DockWidgetFactory, DockWidgetFactoryBase, Extension, Krita, Window  # type: ignore
 
 from . import __version__, eventloop
-from .model import Workspace
 from .qt_compat import QAction, Qt
-from .root import root
+
+from .model.model import Workspace
+from .model.root import root
 from .settings import settings
 from .ui import actions
 from .ui.diffusion import ImageDiffusionWidget

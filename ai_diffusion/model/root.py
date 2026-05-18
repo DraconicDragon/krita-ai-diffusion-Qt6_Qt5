@@ -8,34 +8,34 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
-from .qt_compat import QObject, pyqtSignal
+from ..qt_compat import QObject, pyqtSignal
 
-from . import platform_tools, util
-from .client import ClientMessage
-from .comfy_client import ComfyClient
+from .. import platform_tools, util
+from ..backend.client import ClientMessage
+from ..backend.comfy_client import ComfyClient
+from ..backend.server import Server, ServerState
+from ..document import Document, KritaDocument
+from ..files import File, FileFormat, FileLibrary, FileSource
+from ..persistence import ModelSync, RecentlyUsedSync, import_prompt_from_file
+from ..settings import ServerMode, settings
+from ..ui.theme import checkpoint_icon
+from ..util import client_logger as log
 from .connection import Connection, ConnectionState
 from .custom_workflow import WorkflowCollection
-from .document import Document, KritaDocument
-from .files import File, FileFormat, FileLibrary, FileSource
-from .model import Model
-from .persistence import ModelSync, RecentlyUsedSync, import_prompt_from_file
-from .server import Server, ServerState
-from .settings import ServerMode, settings
-from .ui.theme import checkpoint_icon
+from .model import DocumentModel
 from .updates import AutoUpdate
-from .util import client_logger as log
 
 
 class Root(QObject):
     """Root object, exists once, maintains all other instances. Keeps track of documents
-    openend in Krita and creates a corresponding Model for each."""
+    openend in Krita and creates a corresponding DocumentModel for each."""
 
     @dataclass
     class PerDocument:
-        model: Model
+        model: DocumentModel
         sync: ModelSync | None = None
 
-    model_created = pyqtSignal(Model)
+    model_created = pyqtSignal(DocumentModel)
 
     def __init__(self):
         super().__init__()
@@ -46,7 +46,7 @@ class Root(QObject):
         self._files = FileLibrary.load()
         self._workflows = WorkflowCollection(self._connection)
         self._models: list[Root.PerDocument] = []
-        self._null_model = Model(Document(), self._connection, self._workflows)
+        self._null_model = DocumentModel(Document(), self._connection, self._workflows)
         self._recent = RecentlyUsedSync.from_settings()
         self._auto_update = AutoUpdate()
         if settings.auto_update:
@@ -59,7 +59,7 @@ class Root(QObject):
         self._models = [m for m in self._models if m.model.document.is_valid]
 
     def create_model(self, doc: KritaDocument):
-        model = Model(doc, self._connection, self._workflows)
+        model = DocumentModel(doc, self._connection, self._workflows)
         model_entry = Root.PerDocument(model)
         self._models.append(model_entry)
         self._recent.track(model)
@@ -68,7 +68,7 @@ class Root(QObject):
         self.model_created.emit(model)
         return model
 
-    def model_for_active_document(self) -> Model | None:
+    def model_for_active_document(self) -> DocumentModel | None:
         self.prune_models()
         if doc := KritaDocument.active():
             model = next((m.model for m in self._models if m.model.document == doc), None)
@@ -80,7 +80,7 @@ class Root(QObject):
         return None
 
     @property
-    def models(self) -> list[Model]:
+    def models(self) -> list[DocumentModel]:
         return [m.model for m in self._models]
 
     @property
@@ -163,7 +163,7 @@ class Root(QObject):
             return persist.memory_used
         return 0
 
-    def _find_model(self, job_id: str) -> Model | None:
+    def _find_model(self, job_id: str) -> DocumentModel | None:
         return next((m.model for m in self._models if m.model.jobs.find(job_id)), None)
 
     def _handle_message(self, msg: ClientMessage):
@@ -204,7 +204,7 @@ def _read_log(log_path: Path, last_n: int = 1000):
 def collect_diagnostics(redact_user=True):
     import platform
 
-    from . import __version__
+    from .. import __version__
 
     try:
         from krita import Krita

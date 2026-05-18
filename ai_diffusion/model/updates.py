@@ -6,13 +6,13 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import NamedTuple
 
-from .qt_compat import QObject, pyqtSignal
+from ..qt_compat import QObject, pyqtSignal
 
-from . import __version__, eventloop
-from .network import RequestManager
-from .platform_tools import ZipFile
+from .. import __version__, eventloop
+from ..backend.network import RequestManager
+from ..platform_tools import ZipFile
+from ..util import client_logger as log
 from .properties import ObservableProperties, Property
-from .util import client_logger as log
 
 
 class UpdateState(Enum):
